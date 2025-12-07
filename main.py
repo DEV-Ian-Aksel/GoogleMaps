@@ -116,6 +116,43 @@ async def place_details(
         print(f"❌ Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/maps/geocode")
+async def geocode_address(
+    address: str = Query(..., description="Dirección a geocodificar")
+):
+    """
+    Convertir dirección de texto a coordenadas
+    """
+    try:
+        print(f"🗺️ Geocodificando: {address}")
+        
+        params = {
+            "address": address,
+            "key": GOOGLE_MAPS_API_KEY,
+            "language": "es",
+            "components": "country:mx"
+        }
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                "https://maps.googleapis.com/maps/api/geocode/json",
+                params=params,
+                timeout=10.0
+            )
+            response.raise_for_status()
+            
+        data = response.json()
+        
+        print(f"✅ Geocoding exitoso")
+        
+        return data
+        
+    except httpx.HTTPError as e:
+        print(f"❌ Error HTTP: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error al geocodificar: {str(e)}")
+    except Exception as e:
+        print(f"❌ Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Endpoint de salud para Render
 @app.get("/health")
